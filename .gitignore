@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Secrets / local configuration
+.env
+.env.*
+secrets*
+*.secret
+*.pem
+*.key
+
+# Network captures / proxy exports
+*.pcap
+*.pcapng
+*.cap
+*.mitm
+*.har
+captures/
+
+# Logs / temp
+*.log
+*.tmp

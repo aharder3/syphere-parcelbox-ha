@@ -1,0 +1,12 @@
+{
+  "domain": "syphere_parcelbox",
+  "name": "Syphere Parcelbox",
+  "version": "0.2.0",
+  "config_flow": true,
+  "documentation": "https://www.synomics.ch/produkte/lockerbox",
+  "issue_tracker": "https://github.com/aharder3/syphere-parcelbox-ha/issues",
+  "codeowners": [],
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "requirements": []
+}

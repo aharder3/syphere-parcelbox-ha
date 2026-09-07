@@ -1,0 +1,56 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Syphere Parcelbox verbinden",
+        "description": "Melde dich mit deinem Syphere-Konto an. Das Passwort wird nur für den Login verwendet und nicht im Home-Assistant-Konfigurationseintrag gespeichert. Die Client-ID ist optional und nur für Installationen nötig, deren OAuth-Endpunkt sie bereits beim Login verlangt.",
+        "data": {
+          "email": "E-Mail",
+          "password": "Passwort",
+          "client_id": "Client-ID (optional)",
+          "base_url": "API-Basis-URL"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Syphere Parcelbox neu verbinden",
+        "description": "Melde dich erneut mit deinem Syphere-Konto an. Das Passwort wird nicht gespeichert.",
+        "data": {
+          "email": "E-Mail",
+          "password": "Passwort",
+          "client_id": "Client-ID (optional)",
+          "base_url": "API-Basis-URL"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Syphere ist nicht erreichbar.",
+      "invalid_auth": "Login fehlgeschlagen. Prüfe E-Mail und Passwort. Falls deine Syphere-Installation beim Login eine Client-ID verlangt, trage sie ebenfalls ein.",
+      "client_id_required": "Login war erfolgreich, aber die Client-ID konnte nicht automatisch bestimmt werden. Trage die Client-ID ein und versuche es erneut.",
+      "unknown": "Unerwarteter Fehler der Syphere-API."
+    },
+    "abort": {
+      "already_configured": "Diese Syphere-Parcelbox ist bereits eingerichtet."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "delivery_present": {"name": "Lieferung vorhanden"},
+      "deposition_enabled": {"name": "Abgabe aktiviert"},
+      "bluetooth_reachable": {"name": "Bluetooth erreichbar"},
+      "fixed_lockbox": {"name": "Festes Lieferfach"}
+    },
+    "sensor": {
+      "deposition_state": {"name": "Abgabestatus"},
+      "deposition_size": {"name": "Abgabegrösse"},
+      "available_size_count": {"name": "Verfügbare Fachgrössen"}
+    },
+    "select": {
+      "deposition_size_select": {"name": "Abgabegrösse"}
+    },
+    "button": {
+      "reserve_deposition": {"name": "Abgabe reservieren"},
+      "cancel_deposition": {"name": "Abgabe abbrechen"},
+      "open_delivery": {"name": "Lieferfach öffnen"}
+    }
+  }
+}

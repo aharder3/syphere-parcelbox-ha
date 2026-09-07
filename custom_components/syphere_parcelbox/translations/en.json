@@ -1,0 +1,56 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect Syphere Parcelbox",
+        "description": "Sign in with your Syphere account. The password is used only for the login exchange and is not stored in the Home Assistant config entry. Client ID is optional and only needed for deployments that require it during the initial OAuth request.",
+        "data": {
+          "email": "Email",
+          "password": "Password",
+          "client_id": "Client ID (optional)",
+          "base_url": "API base URL"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reconnect Syphere Parcelbox",
+        "description": "Sign in again with your Syphere account. The password is not stored.",
+        "data": {
+          "email": "Email",
+          "password": "Password",
+          "client_id": "Client ID (optional)",
+          "base_url": "API base URL"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to Syphere.",
+      "invalid_auth": "Login failed. Check email and password. If your Syphere deployment requires a Client ID during login, enter it as well.",
+      "client_id_required": "Login succeeded, but the Client ID could not be determined automatically. Enter the Client ID and try again.",
+      "unknown": "Unexpected Syphere API error."
+    },
+    "abort": {
+      "already_configured": "This Syphere Parcelbox is already configured."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "delivery_present": {"name": "Delivery present"},
+      "deposition_enabled": {"name": "Deposition enabled"},
+      "bluetooth_reachable": {"name": "Bluetooth reachable"},
+      "fixed_lockbox": {"name": "Fixed lockbox"}
+    },
+    "sensor": {
+      "deposition_state": {"name": "Deposition state"},
+      "deposition_size": {"name": "Deposition size"},
+      "available_size_count": {"name": "Available compartment sizes"}
+    },
+    "select": {
+      "deposition_size_select": {"name": "Deposition size"}
+    },
+    "button": {
+      "reserve_deposition": {"name": "Reserve deposition"},
+      "cancel_deposition": {"name": "Cancel deposition"},
+      "open_delivery": {"name": "Open delivery compartment"}
+    }
+  }
+}
