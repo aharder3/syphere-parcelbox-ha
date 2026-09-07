@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.1 — Credential Login Fix
+
+- Match the official iOS app login wire format exactly.
+- Send compact raw JSON while declaring `application/x-www-form-urlencoded`.
+- Include the official app OAuth Client ID automatically.
+- Remove the Client ID field from normal Home Assistant setup.
+- Keep passwords out of persisted config entries.
+- Update tests to verify the observed request shape.
+
 ## v0.2.0 — Credential Login
 
 - Add direct Syphere email/password login through `/api/oauth/token`.

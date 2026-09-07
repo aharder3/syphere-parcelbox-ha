@@ -14,7 +14,6 @@ from .api import (
     SyphereApiClient,
     SyphereApiError,
     SyphereAuthError,
-    SyphereClientIdError,
     SyphereConnectionError,
 )
 from .const import (
@@ -39,10 +38,6 @@ def _login_schema(defaults: dict[str, str] | None = None) -> vol.Schema:
             ): str,
             vol.Required(CONF_PASSWORD): str,
             vol.Optional(
-                CONF_CLIENT_ID,
-                default=defaults.get(CONF_CLIENT_ID, ""),
-            ): str,
-            vol.Optional(
                 CONF_BASE_URL,
                 default=defaults.get(CONF_BASE_URL, DEFAULT_BASE_URL),
             ): str,
@@ -61,14 +56,11 @@ class SyphereConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         base_url = str(user_input[CONF_BASE_URL]).strip().rstrip("/")
         email = str(user_input[CONF_EMAIL]).strip()
         password = str(user_input[CONF_PASSWORD])
-        optional_client_id = str(user_input.get(CONF_CLIENT_ID, "")).strip()
-
         client = await SyphereApiClient.async_login(
             async_get_clientsession(self.hass),
             base_url=base_url,
             email=email,
             password=password,
-            client_id=optional_client_id or None,
         )
 
         # Validate the newly issued token against a normal authenticated API
@@ -89,8 +81,6 @@ class SyphereConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 data, fingerprint = await self._login_and_validate(user_input)
-            except SyphereClientIdError:
-                errors["base"] = "client_id_required"
             except SyphereAuthError:
                 errors["base"] = "invalid_auth"
             except SyphereConnectionError:
@@ -126,7 +116,6 @@ class SyphereConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         defaults = {
             CONF_EMAIL: str(self._reauth_entry.data.get(CONF_EMAIL, "")),
-            CONF_CLIENT_ID: str(self._reauth_entry.data.get(CONF_CLIENT_ID, "")),
             CONF_BASE_URL: str(
                 self._reauth_entry.data.get(CONF_BASE_URL, DEFAULT_BASE_URL)
             ),
@@ -135,8 +124,6 @@ class SyphereConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 data, _ = await self._login_and_validate(user_input)
-            except SyphereClientIdError:
-                errors["base"] = "client_id_required"
             except SyphereAuthError:
                 errors["base"] = "invalid_auth"
             except SyphereConnectionError:

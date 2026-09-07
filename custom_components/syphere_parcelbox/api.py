@@ -16,6 +16,8 @@ from typing import Any
 
 import aiohttp
 
+DEFAULT_OAUTH_CLIENT_ID = "iCLRmUf6C1ZbrlPDTWQ1"
+
 TokenUpdateCallback = Callable[[dict[str, str]], Awaitable[None] | None]
 
 
@@ -123,31 +125,32 @@ class SyphereApiClient:
         password: str,
         client_id: str | None = None,
     ) -> "SyphereApiClient":
-        """Authenticate with email/password and return an initialized client.
+        """Authenticate exactly like the observed official iOS app.
 
-        The initial credential exchange is inferred from the observed Syphere
-        OAuth refresh flow and the service's email/password login UI. The
-        integration sends a standard password-grant-shaped JSON payload to the
-        same token endpoint used by the official app.
+        The Syphere app sends a compact JSON document as the raw HTTP body,
+        while declaring ``application/x-www-form-urlencoded`` as the content
+        type. This is unusual but intentionally reproduced here because the
+        backend expects the app's wire format.
 
-        ``client_id`` is optional. If the backend accepts login without it, the
-        integration extracts the client ID from the returned access-token JWT.
-        If a particular Syphere deployment requires it during login, users can
-        provide it in the advanced setup field.
+        The OAuth client ID is a public application identifier, not a secret.
+        The observed official-app value is used by default and can still be
+        overridden by callers for another Syphere deployment.
         """
         clean_base_url = base_url.rstrip("/")
-        payload: dict[str, Any] = {
+        resolved_client_id = (client_id or DEFAULT_OAUTH_CLIENT_ID).strip()
+        if not resolved_client_id:
+            raise SyphereClientIdError("Syphere OAuth client ID is missing")
+
+        payload = {
             "username": email.strip(),
             "password": password,
             "grant_type": "password",
-            "scope": "openid",
+            "client_id": resolved_client_id,
         }
-        if client_id and client_id.strip():
-            payload["client_id"] = client_id.strip()
-
+        body = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
         headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
+            "Accept": "application/json, text/plain, */*",
+            "Content-Type": "application/x-www-form-urlencoded",
         }
 
         try:
@@ -155,7 +158,7 @@ class SyphereApiClient:
                 "POST",
                 f"{clean_base_url}/api/oauth/token",
                 headers=headers,
-                json=payload,
+                data=body,
                 timeout=aiohttp.ClientTimeout(total=15),
             ) as response:
                 if response.status in (400, 401, 403):
@@ -182,20 +185,16 @@ class SyphereApiClient:
         if not isinstance(refresh_token, str) or not refresh_token:
             raise SyphereAuthError("Syphere login returned no refresh token")
 
-        resolved_client_id = client_id.strip() if client_id and client_id.strip() else ""
-        if not resolved_client_id:
-            response_client_id = data.get("client_id")
-            if isinstance(response_client_id, str) and response_client_id:
-                resolved_client_id = response_client_id
-        if not resolved_client_id:
+        # Prefer a server-provided/issued client_id if available, while keeping
+        # the app identifier used for the login as a reliable fallback.
+        response_client_id = data.get("client_id")
+        if isinstance(response_client_id, str) and response_client_id:
+            resolved_client_id = response_client_id
+        else:
             claims = _decode_jwt_claims_unverified(access_token)
             claim_client_id = claims.get("client_id")
             if isinstance(claim_client_id, str) and claim_client_id:
                 resolved_client_id = claim_client_id
-        if not resolved_client_id:
-            raise SyphereClientIdError(
-                "Syphere login succeeded but no client ID could be determined"
-            )
 
         return cls(
             session,

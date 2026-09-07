@@ -1,23 +1,24 @@
 # Syphere Parcelbox for Home Assistant
 
-**Release: v0.2.0 — Credential Login**
+**Release: v0.2.1 — Credential Login Fix**
 
 Unofficial Home Assistant custom integration for the Syphere Parcelbox cloud service.
 
 > [!IMPORTANT]
 > This project is community-developed and is **not affiliated with, endorsed by, or supported by Synomics/Syphere**. It uses an undocumented API observed from legitimate use of the official app. The API can change without notice.
 
-## What v0.2.0 adds
+## What v0.2.1 fixes
 
-The integration can now start from a normal Syphere account login:
+The initial Syphere login now reproduces the wire format observed from the official iOS app:
 
-- email
-- password
-- optional OAuth Client ID fallback
+- `POST /api/oauth/token`
+- `Content-Type: application/x-www-form-urlencoded`
+- compact JSON sent as the **raw request body**
+- fields: `username`, `password`, `grant_type=password`, `client_id`
 
-The password is used only for the initial `/api/oauth/token` exchange and **is not persisted** in the Home Assistant config entry. After login, Home Assistant stores the access token, refresh token and resolved client ID and automatically rotates tokens when required.
+The official app's OAuth Client ID is used internally, so normal Home Assistant setup only asks for **email and password** (plus the API base URL if you want to override it). OAuth client IDs are application identifiers, not client secrets.
 
-The initial password-grant request shape is inferred from the observed Syphere OAuth refresh flow and the service's email/password login UI. If a Syphere deployment requires a Client ID already during login, enter it in the optional setup field.
+The password is used only for the initial token exchange and **is never persisted** in the Home Assistant config entry. After login, Home Assistant stores the access token, refresh token and resolved client ID and automatically rotates tokens when required.
 
 ## Features
 
@@ -51,14 +52,6 @@ See [Security and privacy](docs/SECURITY_AND_PRIVACY.md).
 
 Publish this folder as a GitHub repository, add it to HACS as a custom repository of type **Integration**, install **Syphere Parcelbox**, then restart Home Assistant.
 
-Before publishing, run:
-
-```bash
-python3 scripts/set_repository_metadata.py OWNER/syphere-parcelbox-ha
-```
-
-This replaces the placeholder GitHub issue-tracker URL. It does not add credentials or private data.
-
 ### Manual
 
 Copy:
@@ -85,7 +78,6 @@ Enter:
 
 - **Email** — your Syphere account email
 - **Password** — used only for the login exchange; not stored
-- **Client ID** — optional; only needed if your Syphere deployment requires it during login
 - **API base URL** — normally leave the default `https://pbb.syphere.net:9997`
 
 After successful login the integration validates the session against `/api/user/homepage`, derives a one-way device fingerprint for duplicate detection, and stores only the token/session data required for future API access.
@@ -127,7 +119,7 @@ See [API notes](docs/API.md). Examples use synthetic IDs only.
 
 ## Status
 
-Experimental release **v0.2.0 — Credential Login**. The status/control and refresh endpoints were directly observed against the tested Syphere Parcelbox service. The initial email/password token request is implemented from the matching OAuth endpoint and login model but should still be verified on a live account before treating the integration as stable.
+Experimental release **v0.2.1 — Credential Login Fix**. The initial password login, token refresh, status, reservation, cancellation and delivery-open request shapes are based on observed traffic from the official Syphere Parcelbox app.
 
 ## License
 

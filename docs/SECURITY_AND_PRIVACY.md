@@ -10,16 +10,16 @@ Treat the following as secrets or private data:
 - refresh tokens
 - personal PINs
 - delivery PINs
-- OAuth/client session values
+- OAuth client session values
 - packet captures and proxy exports
 - account names
 - device/Bluetooth identifiers
 
 The integration does not expose raw homepage responses. It deliberately keeps only the boolean/status fields needed by Home Assistant.
 
-## Credential handling in v0.2.0
+## Credential handling in v0.2.1
 
-The setup flow asks for the Syphere email and password so it can exchange them for OAuth tokens. The password exists only in memory for that request and is not added to the config-entry data. Home Assistant stores the account email, access token, refresh token, Client ID and API base URL locally. Diagnostics redact the email and token/client fields.
+The setup flow asks for the Syphere email and password so it can exchange them for OAuth tokens. The password exists only in memory for that request and is not added to the config-entry data. Home Assistant stores the account email, access token, refresh token, OAuth Client ID and API base URL locally. Diagnostics redact the email and token fields. The OAuth Client ID used by the official app is a public application identifier, not a client secret.
 
 ## Git hygiene
 

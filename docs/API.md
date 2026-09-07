@@ -10,35 +10,21 @@ https://pbb.syphere.net:9997
 
 ## Credential login
 
-The v0.2.0 integration uses the token endpoint for initial email/password login:
+The initial email/password request below was captured from the official iOS app. The wire format is intentionally unusual and is reproduced exactly by the integration:
 
 ```http
 POST /api/oauth/token
-Content-Type: application/json
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json, text/plain, */*
 ```
 
-Implemented request shape:
+Despite the declared form content type, the body is a **raw compact JSON string**, not standard `key=value` form data:
 
 ```json
-{
-  "username": "user@example.invalid",
-  "password": "<password>",
-  "grant_type": "password",
-  "scope": "openid"
-}
+{"username":"user@example.invalid","password":"<password>","grant_type":"password","client_id":"<official-app-client-id>"}
 ```
 
-If a deployment requires a Client ID at initial login, the optional field is added:
-
-```json
-{
-  "client_id": "<client-id>"
-}
-```
-
-The password is never persisted by the Home Assistant integration. If the token response does not directly include a Client ID, the integration attempts to read the `client_id` claim from the returned access-token JWT. This decode is only metadata extraction; it is not used to verify the JWT or make an authorization decision.
-
-> The refresh flow below was directly observed. The exact initial credential request was not captured in the same session, so the credential-login shape remains experimental until verified on a live account.
+There is no bearer `Authorization` header on the initial password login. The official app OAuth Client ID is an application identifier (not a client secret) and is supplied automatically by the integration. The password is used only for this exchange and is never persisted in the Home Assistant config entry.
 
 ## Authenticated requests
 

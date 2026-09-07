@@ -1,7 +1,7 @@
 {
   "domain": "syphere_parcelbox",
   "name": "Syphere Parcelbox",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "config_flow": true,
   "documentation": "https://www.synomics.ch/produkte/lockerbox",
   "issue_tracker": "https://github.com/aharder3/syphere-parcelbox-ha/issues",

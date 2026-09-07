@@ -22,6 +22,7 @@ assert spec and spec.loader
 spec.loader.exec_module(api_module)
 SyphereApiClient = api_module.SyphereApiClient
 SyphereAuthError = api_module.SyphereAuthError
+DEFAULT_OAUTH_CLIENT_ID = api_module.DEFAULT_OAUTH_CLIENT_ID
 
 
 class FakeResponse:
@@ -75,8 +76,8 @@ def fake_jwt(claims: dict[str, Any]) -> str:
 
 
 @pytest.mark.asyncio
-async def test_login_uses_email_password_and_does_not_send_bearer_header():
-    access = fake_jwt({"client_id": "derived-client"})
+async def test_login_matches_observed_official_app_wire_format():
+    access = fake_jwt({"client_id": DEFAULT_OAUTH_CLIENT_ID})
     session = FakeSession(
         [FakeResponse(200, {"access_token": access, "refresh_token": "new-refresh"})]
     )
@@ -92,19 +93,23 @@ async def test_login_uses_email_password_and_does_not_send_bearer_header():
     assert call["method"] == "POST"
     assert call["url"].endswith("/api/oauth/token")
     assert "Authorization" not in call["headers"]
-    assert call["json"] == {
+    assert call["headers"]["Content-Type"] == "application/x-www-form-urlencoded"
+    assert "json" not in call
+    assert json.loads(call["data"]) == {
         "username": "person@example.invalid",
         "password": "secret-placeholder",
         "grant_type": "password",
-        "scope": "openid",
+        "client_id": DEFAULT_OAUTH_CLIENT_ID,
     }
+    # Compact JSON: no spaces are emitted by the official-app-compatible body.
+    assert " " not in call["data"]
     assert client.access_token == access
     assert client.refresh_token == "new-refresh"
-    assert client.client_id == "derived-client"
+    assert client.client_id == DEFAULT_OAUTH_CLIENT_ID
 
 
 @pytest.mark.asyncio
-async def test_login_accepts_explicit_client_id():
+async def test_login_allows_explicit_client_id_override():
     session = FakeSession(
         [
             FakeResponse(
@@ -125,7 +130,7 @@ async def test_login_accepts_explicit_client_id():
         client_id=" explicit-client ",
     )
 
-    assert session.calls[0]["json"]["client_id"] == "explicit-client"
+    assert json.loads(session.calls[0]["data"])["client_id"] == "explicit-client"
     assert client.client_id == "explicit-client"
 
 

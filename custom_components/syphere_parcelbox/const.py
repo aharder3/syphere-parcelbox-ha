@@ -6,7 +6,7 @@ from homeassistant.const import Platform
 
 DOMAIN = "syphere_parcelbox"
 NAME = "Syphere Parcelbox"
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 
 DEFAULT_BASE_URL = "https://pbb.syphere.net:9997"
 DEFAULT_SCAN_INTERVAL = 60
