@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="custom_components/syphere_parcelbox/brand/logo.png" width="160" alt="Syphere Parcelbox integration logo">
+</p>
+
 # Syphere Parcelbox for Home Assistant
 
 **Release: v0.2.1 — Credential Login Fix**
