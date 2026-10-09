@@ -15,7 +15,20 @@ Treat the following as secrets or private data:
 - account names
 - device/Bluetooth identifiers
 
-The integration does not expose raw homepage responses. It deliberately keeps only the boolean/status fields needed by Home Assistant.
+The integration does not expose raw homepage responses. In v0.2.2, recognized PIN values can be shown as Home Assistant sensor states. All PIN values are redacted from downloadable diagnostics. Personal names and Bluetooth identifiers are discarded. The personal PIN sensor is disabled by default.
+
+PIN sensor states can be stored in Home Assistant Recorder/history. Merge the following exclusions into the existing `recorder` configuration (if present), using the actual generated entity IDs or patterns:
+
+```yaml
+recorder:
+  exclude:
+    entity_globs:
+      - sensor.*_delivery_pin
+      - sensor.*_return_pin
+      - sensor.*_personal_pin
+```
+
+Do not share PIN sensor histories or expose them on public dashboards, remote assistants or log exports.
 
 ## Credential handling in v0.2.1
 

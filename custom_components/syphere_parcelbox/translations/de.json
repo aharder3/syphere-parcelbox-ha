@@ -53,6 +53,15 @@
       },
       "available_size_count": {
         "name": "Verfügbare Fachgrössen"
+      },
+      "delivery_pin": {
+        "name": "Abhol-PIN"
+      },
+      "return_pin": {
+        "name": "Rücksende-PIN"
+      },
+      "personal_pin": {
+        "name": "Persönlicher PIN"
       }
     },
     "select": {

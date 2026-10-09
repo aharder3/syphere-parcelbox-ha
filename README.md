@@ -4,12 +4,22 @@
 
 # Syphere Parcelbox for Home Assistant
 
-**Release: v0.2.1 — Credential Login Fix**
+**Release: v0.2.2 — PIN Sensors**
 
 Unofficial Home Assistant custom integration for the Syphere Parcelbox cloud service.
 
 > [!IMPORTANT]
 > This project is community-developed and is **not affiliated with, endorsed by, or supported by Synomics/Syphere**. It uses an undocumented API observed from legitimate use of the official app. The API can change without notice.
+
+## What v0.2.2 adds
+
+- Delivery PIN sensor if the existing API returns `delivery_pin` or `pickup_pin`.
+- Optional return PIN sensor if Syphere provides an active return PIN.
+- Personal PIN sensor (disabled by default because it may be a persistent credential).
+- API field-name discovery (only field names, never unknown values).
+- PIN values are redacted from downloadable integration diagnostics.
+
+**Note:** API availability of PIN values has not been verified against a live Syphere account. Missing PINs show as `unknown`; no PIN is generated locally. PIN entities can enter Home Assistant history unless excluded from Recorder.
 
 ## What v0.2.1 fixes
 
@@ -42,7 +52,7 @@ The password is used only for the initial token exchange and **is never persiste
 
 ## Privacy and security
 
-The Syphere API may return personal names, Bluetooth identifiers, delivery PINs and personal PINs. This integration deliberately discards those fields and does not expose them as entities or diagnostics.
+The Syphere API can return personal data and PINs. Personal names and Bluetooth identifiers are discarded. Explicit PIN sensors may expose PINs within Home Assistant; all PIN values are redacted from exported diagnostics. The personal PIN sensor is disabled by default.
 
 The account email, OAuth access token, refresh token and Client ID are redacted from Home Assistant diagnostics. The Syphere password is never saved by the integration.
 
@@ -97,6 +107,9 @@ Typical entities include:
 - `sensor.*_deposition_state`
 - `sensor.*_deposition_size`
 - `sensor.*_available_compartment_sizes`
+- `sensor.*_delivery_pin` (when a delivery PIN is returned)
+- `sensor.*_return_pin` (when a return PIN is returned)
+- `sensor.*_personal_pin` (disabled by default)
 - one availability binary sensor for every size returned by Syphere
 - `select.*_deposition_size`
 - `button.*_reserve_deposition`
@@ -123,7 +136,7 @@ See [API notes](docs/API.md). Examples use synthetic IDs only.
 
 ## Status
 
-Experimental release **v0.2.1 — Credential Login Fix**. The initial password login, token refresh, status, reservation, cancellation and delivery-open request shapes are based on observed traffic from the official Syphere Parcelbox app.
+Experimental release **v0.2.2 — PIN Sensors**. The initial password login, token refresh, status, reservation, cancellation and delivery-open request shapes are based on observed traffic from the official Syphere Parcelbox app.
 
 ## License
 

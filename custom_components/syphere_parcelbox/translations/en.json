@@ -53,6 +53,15 @@
       },
       "available_size_count": {
         "name": "Available compartment sizes"
+      },
+      "delivery_pin": {
+        "name": "Delivery PIN"
+      },
+      "return_pin": {
+        "name": "Return PIN"
+      },
+      "personal_pin": {
+        "name": "Personal PIN"
       }
     },
     "select": {

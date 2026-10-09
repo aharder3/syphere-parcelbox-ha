@@ -152,39 +152,36 @@ async def test_login_failure_does_not_echo_credentials_in_exception():
 
 
 @pytest.mark.asyncio
-async def test_status_strips_personal_data_and_pins():
+async def test_status_exposes_only_explicit_pin_fields():
     session = FakeSession(
-        [
-            FakeResponse(
-                200,
-                {
-                    "delivery": {
-                        "has_delivery": True,
-                        "fix_lockbox": False,
-                        "delivery_pin": "DO-NOT-KEEP",
-                    },
-                    "surname": "Example",
-                    "name": "Person",
-                    "personal_pin": "DO-NOT-KEEP",
-                    "bt_ident": "DO-NOT-KEEP",
-                    "deposition": {"state": "requested", "size": "M", "deposition_id": 42},
-                    "deposition_active": True,
-                    "bt_reachability": False,
-                },
-            )
-        ]
+        [FakeResponse(200, {
+            "delivery": {
+                "has_delivery": True,
+                "fix_lockbox": False,
+                "delivery_pin": "001234",
+            },
+            "surname": "Example",
+            "name": "Person",
+            "personal_pin": "9876",
+            "bt_ident": "PRIVATE-BT-IDENTIFIER",
+            "deposition": {
+                "state": "requested", "size": "M",
+                "deposition_id": 42,
+                "return_pin": "000567",
+            },
+            "deposition_active": True,
+            "bt_reachability": False,
+        })]
     )
     status = await make_client(session).async_get_status()
-
-    assert status == {
-        "delivery": {"has_delivery": True, "fix_lockbox": False},
-        "deposition": {"state": "requested", "size": "M"},
-        "deposition_active": True,
-        "bt_reachability": False,
-    }
-    serialized = repr(status)
-    assert "DO-NOT-KEEP" not in serialized
-    assert "deposition_id" not in serialized
+    assert status["delivery"]["delivery_pin"] == "001234"
+    assert status["deposition"]["return_pin"] == "000567"
+    assert status["personal_pin"] == "9876"
+    assert "PRIVATE-BT-IDENTIFIER" not in repr(status)
+    assert "Example" not in repr(status)
+    assert status["deposition"].get("deposition_id") is None
+    assert "delivery_pin" in status["api_field_names"]["delivery"]
+    assert "return_pin" in status["api_field_names"]["deposition"]
 
 
 @pytest.mark.asyncio
@@ -271,3 +268,28 @@ async def test_401_refreshes_tokens_and_retries_without_leaking_values():
     assert session.calls[1]["url"].endswith("/api/oauth/token")
     assert session.calls[1]["json"]["grant_type"] == "refresh_token"
     assert session.calls[2]["headers"]["Authorization"] == "Bearer new-access"
+
+
+@pytest.mark.asyncio
+async def test_pins_clear_when_parcel_or_deposition_is_not_active():
+    session = FakeSession([FakeResponse(200, {
+        "delivery": {"has_delivery": False, "delivery_pin": "1234"},
+        "deposition": {"state": "no_deposition", "return_pin": "5678"},
+        "deposition_active": False,
+    })])
+    status = await make_client(session).async_get_status()
+    assert status["delivery"]["delivery_pin"] is None
+    assert status["deposition"]["return_pin"] is None
+    assert status["personal_pin"] is None
+
+
+@pytest.mark.asyncio
+async def test_pin_fallback_fields_when_returned_by_api():
+    session = FakeSession([FakeResponse(200, {
+        "delivery": {"has_delivery": True, "pickup_pin": "000777"},
+        "deposition": {"state": "requested", "deposition_pin": 98765},
+        "deposition_active": True,
+    })])
+    status = await make_client(session).async_get_status()
+    assert status["delivery"]["delivery_pin"] == "000777"
+    assert status["deposition"]["return_pin"] == "98765"

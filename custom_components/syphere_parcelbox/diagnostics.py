@@ -24,6 +24,8 @@ async def async_get_config_entry_diagnostics(
     runtime: SyphereRuntimeData = entry.runtime_data
     return {
         "config": async_redact_data(dict(entry.data), TO_REDACT),
-        "data": runtime.coordinator.data,
+        "data": async_redact_data(
+            runtime.coordinator.data, {"delivery_pin", "return_pin", "personal_pin"}
+        ),
         "selected_size": runtime.selected_size,
     }

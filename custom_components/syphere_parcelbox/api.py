@@ -45,6 +45,18 @@ class SyphereNoDepositionError(SyphereApiError):
     """There is no active deposition to cancel."""
 
 
+def _pin_value(*values: Any) -> str | None:
+    """Read PIN values without destroying leading zeroes or logging credentials."""
+    for value in values:
+        if isinstance(value, bool) or value is None:
+            continue
+        if isinstance(value, (str, int)):
+            result = str(value).strip()
+            if result:
+                return result
+    return None
+
+
 def _decode_jwt_claims_unverified(token: str) -> dict[str, Any]:
     """Decode JWT payload claims without verifying the signature.
 
@@ -308,17 +320,40 @@ class SyphereApiClient:
             data.get("deposition") if isinstance(data.get("deposition"), dict) else {}
         )
 
+        has_delivery = bool(delivery.get("has_delivery", False))
+        deposition_state = deposition.get("state")
         return {
             "delivery": {
-                "has_delivery": bool(delivery.get("has_delivery", False)),
+                "has_delivery": has_delivery,
                 "fix_lockbox": bool(delivery.get("fix_lockbox", False)),
+                "delivery_pin": (
+                    _pin_value(
+                        delivery.get("delivery_pin"),
+                        delivery.get("pickup_pin"),
+                        data.get("delivery_pin"),
+                    ) if has_delivery else None
+                ),
             },
             "deposition": {
-                "state": deposition.get("state"),
+                "state": deposition_state,
                 "size": deposition.get("size"),
+                "return_pin": (
+                    _pin_value(
+                        deposition.get("return_pin"),
+                        deposition.get("deposition_pin"),
+                        data.get("return_pin"),
+                    ) if deposition_state not in (None, "no_deposition") else None
+                ),
             },
+            "personal_pin": _pin_value(data.get("personal_pin")),
             "deposition_active": bool(data.get("deposition_active", False)),
             "bt_reachability": bool(data.get("bt_reachability", False)),
+            # Only names; no unrecognized API values are retained.
+            "api_field_names": {
+                "homepage": sorted(data.keys()),
+                "delivery": sorted(delivery.keys()),
+                "deposition": sorted(deposition.keys()),
+            },
         }
 
     async def _async_get_sizes_raw(self) -> list[dict[str, Any]]:

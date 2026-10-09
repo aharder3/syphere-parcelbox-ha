@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.2 — PIN Sensors
+
+- Add one-time delivery PIN sensor, optionally using PIN values returned by the existing homepage API.
+- Add optional return PIN and disabled-by-default personal PIN sensors.
+- Discover homepage API field names without revealing unknown values.
+- Redact PIN values from diagnostics and update tests, documentation and versions.
+
 ## v0.2.1 — Credential Login Fix
 
 - Match the official iOS app login wire format exactly.
