@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import importlib.util
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -293,3 +294,59 @@ async def test_pin_fallback_fields_when_returned_by_api():
     status = await make_client(session).async_get_status()
     assert status["delivery"]["delivery_pin"] == "000777"
     assert status["deposition"]["return_pin"] == "98765"
+
+
+@pytest.mark.asyncio
+async def test_delivery_open_logs_http_status_without_secrets(caplog):
+    session = FakeSession([FakeResponse(200, None)])
+    client = make_client(session)
+    with caplog.at_level(logging.INFO, logger="syphere_api"):
+        await client.async_open_delivery()
+
+    assert session.calls[0]["method"] == "POST"
+    assert session.calls[0]["url"].endswith("/api/delivery/open")
+    assert session.calls[0]["json"] == {}
+    assert "HTTP 200" in caplog.text
+    assert "physical opening not confirmed" in caplog.text
+    assert "access-placeholder" not in caplog.text
+    assert "refresh-placeholder" not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_delivery_open_logs_failed_http_status(caplog):
+    session = FakeSession([FakeResponse(503, {"private": "DO_NOT_LOG"})])
+    client = make_client(session)
+    with pytest.raises(api_module.SyphereApiError):
+        await client.async_open_delivery()
+
+    assert "HTTP 503" in caplog.text
+    assert "DO_NOT_LOG" not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_delivery_open_logs_transport_error_without_secrets(caplog):
+    class FailingSession:
+        def request(self, method, url, **kwargs):
+            raise api_module.aiohttp.ClientError("connection unavailable")
+
+    with pytest.raises(api_module.SyphereConnectionError):
+        await make_client(FailingSession()).async_open_delivery()
+
+    assert "delivery-open transport error" in caplog.text
+    assert "ClientError" in caplog.text
+    assert "access-placeholder" not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_delivery_open_logs_token_refresh_and_retry(caplog):
+    session = FakeSession([
+        FakeResponse(401),
+        FakeResponse(200, {"access_token": "rotated-access", "refresh_token": "rotated-refresh"}),
+        FakeResponse(200),
+    ])
+    with caplog.at_level(logging.INFO, logger="syphere_api"):
+        await make_client(session).async_open_delivery()
+
+    assert "HTTP 401" in caplog.text
+    assert "HTTP 200" in caplog.text
+    assert "rotated-access" not in caplog.text
