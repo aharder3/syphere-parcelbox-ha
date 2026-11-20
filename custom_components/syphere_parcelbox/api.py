@@ -12,9 +12,13 @@ from collections.abc import Awaitable, Callable
 import hashlib
 import inspect
 import json
+import logging
+from time import monotonic
 from typing import Any
 
 import aiohttp
+
+_LOGGER = logging.getLogger(__name__)
 
 DEFAULT_OAUTH_CLIENT_ID = "iCLRmUf6C1ZbrlPDTWQ1"
 
@@ -224,6 +228,8 @@ class SyphereApiClient:
         payload: dict[str, Any] | None = None,
         retry_auth: bool = True,
     ) -> Any:
+        # Only diagnose the compartment-open command; never log credentials or payloads.
+        started_at = monotonic() if method == "POST" and path == "/api/delivery/open" else None
         headers = {
             "Accept": "application/json",
             "Authorization": f"Bearer {self._access_token}",
@@ -239,6 +245,14 @@ class SyphereApiClient:
                 json=payload,
                 timeout=aiohttp.ClientTimeout(total=15),
             ) as response:
+                if started_at is not None:
+                    _LOGGER.log(
+                        logging.WARNING if response.status >= 400 else logging.INFO,
+                        "Syphere delivery-open API returned HTTP %s in %.0f ms "
+                        "(physical opening not confirmed)",
+                        response.status,
+                        (monotonic() - started_at) * 1000,
+                    )
                 if response.status == 401 and retry_auth:
                     await self.async_refresh_token()
                     return await self._request(
@@ -258,6 +272,12 @@ class SyphereApiClient:
         except SyphereApiError:
             raise
         except (aiohttp.ClientError, TimeoutError) as err:
+            if started_at is not None:
+                _LOGGER.warning(
+                    "Syphere delivery-open transport error after %.0f ms (%s)",
+                    (monotonic() - started_at) * 1000,
+                    type(err).__name__,
+                )
             raise SyphereConnectionError("Unable to connect to the Syphere API") from err
 
     async def async_refresh_token(self) -> None:
