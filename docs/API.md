@@ -138,3 +138,28 @@ Content-Type: application/json
 ```
 
 The response contains a new access token and refresh token. The integration persists both into the Home Assistant config entry.
+
+## Delivery-open troubleshooting
+
+The integration logs the HTTP status and elapsed request time for
+`POST /api/delivery/open` without logging tokens, PINs, headers,
+request bodies or response bodies. For successful requests, logs are
+at INFO level; HTTP errors and transport errors are at WARNING level.
+
+To also see successful requests, set the Home Assistant logger level
+for this module to INFO, for example in `configuration.yaml`:
+
+```yaml
+logger:
+  logs:
+    custom_components.syphere_parcelbox.api: info
+```
+
+Alternatively, use the Home Assistant `logger.set_level` action to set
+`custom_components.syphere_parcelbox.api: info` for the current session.
+
+An HTTP 200 response means the cloud API accepted the request; it
+**does not prove that the physical compartment opened**. The current
+delivery-present sensor changes when the delivery is removed, so it
+must not be used as a reliable door-open confirmation. There is no
+automatic retry of physical opening commands.
